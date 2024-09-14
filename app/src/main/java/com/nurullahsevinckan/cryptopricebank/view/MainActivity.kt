@@ -16,10 +16,14 @@ import com.nurullahsevinckan.cryptopricebank.adapter.Listener
 import com.nurullahsevinckan.cryptopricebank.databinding.ActivityMainBinding
 import com.nurullahsevinckan.cryptopricebank.model.CryptoModel
 import com.nurullahsevinckan.cryptopricebank.services.CryptoAPI
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity(),Listener {
@@ -28,6 +32,9 @@ class MainActivity : AppCompatActivity(),Listener {
     private val BASE_URL : String = "https://raw.githubusercontent.com/"
     private var cryptoModels : ArrayList<CryptoModel>? = null
     private  var recyclerViewAdapter : CryptoAdapter? = null
+
+    //Disposable: use and free it
+    private var compositDisposable : CompositeDisposable? = null
 
 
 
@@ -53,7 +60,26 @@ class MainActivity : AppCompatActivity(),Listener {
     val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
+        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+        .build().create(CryptoAPI::class.java)
+
+
+        compositDisposable?.add(retrofit.getData()
+            .subscribeOn(Schedulers.io()) // Working on background thread
+            .observeOn(AndroidSchedulers.mainThread()) // Process data on main thread
+            .subscribe(this::handleResponse) // When this work done and return data handleResponse get data
+        )
+
+
+
+        //Just using Retrofit way :
+        /*
+
+         val retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
         .build()
+
 
         val service = retrofit.create(CryptoAPI::class.java)
         val call = service.getData()
@@ -82,10 +108,31 @@ class MainActivity : AppCompatActivity(),Listener {
             }
 
         })
+
+         */
+
+
+
     }
 
+
+    private  fun handleResponse(cryptoList : List<CryptoModel>){
+
+        cryptoModels =ArrayList(cryptoList)
+
+        cryptoModels?.let { cryptoModels->
+            recyclerViewAdapter = CryptoAdapter(cryptoModels,this@MainActivity)
+            binding.recyclerView.adapter = recyclerViewAdapter
+        }
+    }
     override fun onItemClick(cryptoModel: CryptoModel) {
         Toast.makeText(this," ${cryptoModel.currency} is clicked",Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        compositDisposable?.clear() // Clear all API calls when app dead
     }
 
 }
