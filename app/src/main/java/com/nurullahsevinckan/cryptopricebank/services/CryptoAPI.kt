@@ -2,7 +2,6 @@ package com.nurullahsevinckan.cryptopricebank.services
 
 import com.nurullahsevinckan.cryptopricebank.model.CryptoModel
 import io.reactivex.Observable
-import retrofit2.Call
 import retrofit2.http.GET
 
 interface CryptoAPI {

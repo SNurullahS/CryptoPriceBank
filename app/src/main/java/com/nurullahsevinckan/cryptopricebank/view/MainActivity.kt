@@ -1,17 +1,14 @@
 package com.nurullahsevinckan.cryptopricebank.view
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.nurullahsevinckan.cryptopricebank.R
 import com.nurullahsevinckan.cryptopricebank.adapter.CryptoAdapter
-import com.nurullahsevinckan.cryptopricebank.adapter.CryptoViewHolder
 import com.nurullahsevinckan.cryptopricebank.adapter.Listener
 import com.nurullahsevinckan.cryptopricebank.databinding.ActivityMainBinding
 import com.nurullahsevinckan.cryptopricebank.model.CryptoModel
@@ -19,9 +16,6 @@ import com.nurullahsevinckan.cryptopricebank.services.CryptoAPI
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
