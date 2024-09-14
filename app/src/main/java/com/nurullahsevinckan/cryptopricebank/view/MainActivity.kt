@@ -2,11 +2,17 @@ package com.nurullahsevinckan.cryptopricebank.view
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.nurullahsevinckan.cryptopricebank.R
+import com.nurullahsevinckan.cryptopricebank.adapter.CryptoAdapter
+import com.nurullahsevinckan.cryptopricebank.adapter.CryptoViewHolder
+import com.nurullahsevinckan.cryptopricebank.adapter.Listener
 import com.nurullahsevinckan.cryptopricebank.databinding.ActivityMainBinding
 import com.nurullahsevinckan.cryptopricebank.model.CryptoModel
 import com.nurullahsevinckan.cryptopricebank.services.CryptoAPI
@@ -16,11 +22,12 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(),Listener {
     // https://raw.githubusercontent.com/atilsamancioglu/K21-JSONDataSet/master/crypto.json
     private lateinit var binding :ActivityMainBinding
     private val BASE_URL : String = "https://raw.githubusercontent.com/"
     private var cryptoModels : ArrayList<CryptoModel>? = null
+    private  var recyclerViewAdapter : CryptoAdapter? = null
 
 
 
@@ -35,6 +42,10 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
+
+
         loadData()
     }
 
@@ -55,9 +66,12 @@ class MainActivity : AppCompatActivity() {
                 if(response.isSuccessful){
                     response.body()?.let {listCryptoModel ->
                         cryptoModels =ArrayList(listCryptoModel)
-                        for(element in cryptoModels!!){
-                         //Access all crypto name and their price by element key
+                        cryptoModels?.let { cryptoModels->
+                            recyclerViewAdapter = CryptoAdapter(cryptoModels,this@MainActivity)
+                            binding.recyclerView.adapter = recyclerViewAdapter
                         }
+
+
 
                     }
                 }
@@ -68,6 +82,10 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    override fun onItemClick(cryptoModel: CryptoModel) {
+        Toast.makeText(this," ${cryptoModel.currency} is clicked",Toast.LENGTH_LONG).show()
     }
 
 }
