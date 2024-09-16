@@ -16,9 +16,16 @@ import com.nurullahsevinckan.cryptopricebank.services.CryptoAPI
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.coroutines.coroutineContext
 
 class MainActivity : AppCompatActivity(),Listener {
     // https://raw.githubusercontent.com/atilsamancioglu/K21-JSONDataSet/master/crypto.json
@@ -29,6 +36,13 @@ class MainActivity : AppCompatActivity(),Listener {
 
     //Disposable: use and free it
     private var compositDisposable : CompositeDisposable? = null
+
+    //For coroutines
+    private var job : Job? =null
+    // If we have error on coroutines call then it will show us the error
+    val expectHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+        println("Error: ${throwable.localizedMessage}")
+    }
 
 
 
@@ -58,13 +72,34 @@ class MainActivity : AppCompatActivity(),Listener {
         .build().create(CryptoAPI::class.java)
 
 
+        job = CoroutineScope(Dispatchers.IO + expectHandler).launch { //First we get data with io threads
+            val response  = retrofit.getData()
+
+            withContext(Dispatchers.Main + expectHandler){ // We use main thread to process and serve our data
+                if(response.isSuccessful){
+                    response.body()?.let {listOfData ->
+                        cryptoModels = ArrayList(listOfData)
+                        cryptoModels?.let {arrayListOfData ->
+                            recyclerViewAdapter = CryptoAdapter(arrayListOfData, this@MainActivity)
+                            binding.recyclerView.adapter = recyclerViewAdapter
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+        //This section for RxJava implementation
+/*
         compositDisposable?.add(retrofit.getData()
             .subscribeOn(Schedulers.io()) // Working on background thread
             .observeOn(AndroidSchedulers.mainThread()) // Process data on main thread
             .subscribe(this::handleResponse) // When this work done and return data handleResponse get data
         )
 
-
+*/
 
         //Just using Retrofit way :
         /*
@@ -125,8 +160,9 @@ class MainActivity : AppCompatActivity(),Listener {
 
     override fun onDestroy() {
         super.onDestroy()
-
-        compositDisposable?.clear() // Clear all API calls when app dead
+        //RxJava usage
+        //compositDisposable?.clear() // Clear all API calls when app dead
+        job?.cancel()
     }
 
 }
